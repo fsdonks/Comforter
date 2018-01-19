@@ -1,11 +1,7 @@
-/target
-/classes
-/checkouts
+hs_err_pid*.log
 pom.xml
 pom.xml.asc
-*.jar
-*.class
-/.lein-*
-/.nrepl-port
-.hgignore
-.hg/
+**/gen
+**/target
+.*
+!.gitignore
