@@ -1,0 +1,3 @@
+Case	Filepath	Demand ISC Description	Policy Desciption	AC Pre-Surge BOG	AC Pre-Surge BOG: Dwell Ration	AC Surge BOG	AC Surge BOG: Dwell Ratio	RC Pre-Surge BOG	RC Pre-Surge Mob:Dwell Ratio	RC Surge BOG	RC Surge Mob:Dwell Ratio
+BASE	C:\Users\michael.m.pavlak\Desktop\req.txt	Sc. 7 + Sc 3.1 Deny + HLD + CT thru Surge	Pre-surge	12 months	1:2	Indefinite	1:0	9 months 	1:5	12 months	1:2
+Excursion_1	C:\Users\michael.m.pavlak\Desktop\req.txt	Sc. 7 + Sc 3.1 Deny + HLD + CT Surge only	Surge	Not modeled	Not Modeled	Indefinite	1:0	Not modeled	Not Modeled	12 months	1:2
