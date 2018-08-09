@@ -8,11 +8,15 @@
 ;;Returns num from string without throwing errors 
 (defn read-num [string]
   (if string
-    (let [num (fn [string] (apply str (map #(re-matches #"[\d.]*" %) (map str string))))
-          n (clojure.string/split (num string) #"[.]")  t (take 2 n) b (drop 2 n)
-          d (read-string (str (first t) "." (second t) (apply str b)))]
-      (if (zero? (- d (int d))) (int d) d))
+    (if (= "" string)
+      0
+      (let [num (fn [string] (apply str (map #(re-matches #"[\d.]*" %) (map str string))))
+            n (clojure.string/split (num string) #"[.]")  t (take 2 n) b (drop 2 n)
+            d (read-string (str (first t) "." (second t) (apply str b)))]
+        (if (zero? (- d (int d))) (int d) d)))
     0))
+
+(defn filter-empties [lines] (filter #(not (every? (fn [x] (= "" x)) %)) lines))
 
 (defn read-header [file] ;;Reads first line of file and maps column name to index number
   (let [h (with-open [r (clojure.java.io/reader file)] (clojure.string/split (first (line-seq r)) (re-pattern "\t")))]
@@ -24,20 +28,20 @@
     (zipmap compos (for [c compos] 
                     (filter #(= c (nth % (get header "Component"))) 
                      (with-open [r (clojure.java.io/reader supplyfile)]
-                      (into [] (pmap #(clojure.string/split % (re-pattern "\t")) (line-seq r)))))))))
+                      (into [] (filter-empties (pmap #(clojure.string/split % (re-pattern "\t")) (line-seq r))))))))))
 
 ;; Returns map of demands lines for all demands and true demands
 (defn read-demand [demandfile]
   (let [header (read-header demandfile) 
         all-demands (with-open [r (clojure.java.io/reader demandfile)]
-                      (into [] (pmap #(clojure.string/split % (re-pattern "\t")) (line-seq r))))]
+                      (into [] (filter-empties (pmap #(clojure.string/split % (re-pattern "\t")) (line-seq r)))))]
     {"AllDemands" all-demands "TrueDemands" (filter #(= "true" (.trim (.toLowerCase (nth % (get header "Enabled"))))) all-demands)}))
 
 ;; Returns a map with SRC as key and the cost of a single unit of that SRC was the value.
 (defn read-costs [costfile]
   (let [header (read-header costfile)]
     (with-open [r (clojure.java.io/reader costfile)]
-      (let [lines (pmap #(clojure.string/split % #"\t") (drop 1 (line-seq r)))
+      (let [lines (filter-empties (pmap #(clojure.string/split % #"\t") (drop 1 (line-seq r))))
             z (zipmap (map #(nth % (get header "src")) lines) (map #(nth % (get header "total_cost")) lines))]
         (zipmap (keys z) (map read-num (vals z)))))))
       
@@ -46,7 +50,7 @@
 (defn read-case [casefile]
   (let [header (read-header casefile)
         lines (with-open [r (clojure.java.io/reader casefile)]
-                (into [] (map #(clojure.string/split % #"\t") (line-seq r))))
+                (into [] (filter-empties (map #(clojure.string/split % #"\t") (line-seq r)))))
         p (partition-by #(list (nth % (get header "Case")) (nth % (get header "Vignette"))) lines)
         vs (for [val p] (map #(nth % (get header "Operation")) val))
         ks (apply concat (for [val p] (set (map #(list (nth % (get header "Case")) (nth % (get header "Vignette"))) val))))]
@@ -56,14 +60,14 @@
 (defn read-reqs [reqfile] 
   (let [header (read-header reqfile)]
     (with-open [r (clojure.java.io/reader reqfile)]
-      (let [lines (filter #(= "AC" (nth % (get header "Component"))) (pmap #(clojure.string/split % #"\t") (line-seq r)))]
+      (let [lines (filter-empties (filter #(= "AC" (nth % (get header "Component"))) (pmap #(clojure.string/split % #"\t") (line-seq r))))]
         (zipmap (map #(nth % (get header "SRC")) lines) (map #(nth % (get header "Quantity")) lines))))))
 
 ;; Returns seq of maps with keys :case, :reqfile (filepath), and :vals (including case and reqfile) 
 (defn read-inputfile [inputfile]
   (let [header (read-header inputfile)]
     (with-open [r (clojure.java.io/reader inputfile)]
-      (let [lines (into [] (map #(clojure.string/split % #"\t") (drop 1 (line-seq r))))]
+      (let [lines (filter-empties (into [] (map #(clojure.string/split % #"\t") (drop 1 (line-seq r)))))]
         (map #(identity {:case (nth % (get header "Case")) :reqfile (nth % (get header "Filepath")) :vals %}) lines)))))
 
 (def branches
@@ -119,7 +123,9 @@
   (for [src (get-srcs (apply concat (vals supply)) supplyheader) :let [req (get-requirement src reqs)]]
     [(get-branch-code src) ;;Branch Code
      (get-branch (get-branch-code src) branches) ;;Branch
-     (nth (first (filter #(= src (nth % (get supplyheader "SRC"))) (apply concat (vals supply)))) (get supplyheader "Unit Groupings")) ;;Unit Grouping
+     (try
+       (nth (first (filter #(= src (nth % (get supplyheader "SRC"))) (apply concat (vals supply)))) (get supplyheader "Unit Groupings"))
+       (catch Exception e nil)) ;;Unit Grouping
      src ;;SRC
      (get-title src (apply concat (vals supply)) supplyheader) ;OITitle
      (if (in-demand? src (get-srcs (get demand "TrueDemands") demandheader)) "TRUE" "FALSE") ;;In-demand?
@@ -186,10 +192,4 @@
     (catch Exception e (println e))
     (finally (System/exit 0))))
 
-;; For testing 
-(comment
-  (def supplyfile "C:\\Users\\michael.m.pavlak\\Desktop\\taa_test_data\\supply_builder\\ManySRCs\\Output\\FORMATTED_SupplyManySRCs.txt")
-  (def demandfile "C:\\Users\\michael.m.pavlak\\Desktop\\demand_builder-master\\Demand Test Cases\\complexest\\Input\\Input_DEMAND.txt")
-  (def costfile   "C:\\Users\\michael.m.pavlak\\Desktop\\example-acos.txt")
-  (def inputfile  "C:\\Users\\michael.m.pavlak\\Desktop\\input.txt")
-  (def outputfile "C:\\Users\\michael.m.pavlak\\Desktop\\output.txt"))
+
