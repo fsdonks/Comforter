@@ -1,4 +1,4 @@
-(ns Comforter.core
+(ns comforter.core
   (:gen-class)
   (:import  [javax.swing JFrame JFileChooser])
   (:require [clojure.java [io :as io]]))

@@ -1,5 +1,5 @@
-(defproject Comforter.clj "0.0.1-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject comforter "0.0.1-SNAPSHOT"
+  :description "Post processor for requirements analysis."
   :dependencies [[org.clojure/clojure "1.8.0"]]
-  :aot [Comforter.core]
-  :main Comforter.core)
+  :aot [comforter.core]
+  :main comforter.core)
