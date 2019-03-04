@@ -175,7 +175,8 @@
 ;; Returns the personnel in a single unit of the SRC
 (defn get-src-personnel [src supply supplyheader]
   (apply + (map #(read-num (nth % (get supplyheader "Strength")))
-                (filter #(= src (nth % (get supplyheader "SRC")))
+                (filter #(and (= src (nth % (get supplyheader "SRC")))
+                          (= "AC" (nth % (get supplyheader "Component"))))
                         (apply concat (vals supply))))))
 
 ;; Returns the total personnel for the SRC by multiplying the quantity of the
@@ -226,12 +227,12 @@
      (get-requirement-cost src req costs) ;;Requirement Cost (req * cost)
      (get-requirement-personnel src req supply supplyheader) ;; Demand Personnel
      (- (get-AC-supply src supply supplyheader) req) ;;Suppply - Demand
-     (- (* (get-src-cost src costs) (get-AC-supply src supply supplyheader))
-        (get-requirement-cost src req costs)) ;;Marginal Cost
+     (- (get-requirement-cost src req costs)
+      (* (get-src-cost src costs) (get-AC-supply src supply supplyheader))) ;;Marginal Cost
      ;;Marginal Personnel
-     ( - (* (get-src-personnel src supply supplyheader)
-            (get-AC-supply src supply supplyheader))
-      (get-requirement-personnel src req supply supplyheader))]))
+     ( - (get-requirement-personnel src req supply supplyheader)
+      (* (get-src-personnel src supply supplyheader)
+            (get-AC-supply src supply supplyheader)))]))
 
 ;;Reads in inputfiles and formats output lines
 (defn post-process->lines [inputfile supplyfile demandfile costfile]
