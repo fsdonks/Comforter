@@ -1,0 +1,3 @@
+Case	SupplyPath	RequirementsPath	Demand ISC Description	Policy Desciption	AC Pre-Surge BOG	AC Pre-Surge BOG: Dwell Ration	AC Surge BOG	AC Surge BOG: Dwell Ratio	RC Pre-Surge BOG	RC Pre-Surge Mob:Dwell Ratio	RC Surge BOG	RC Surge Mob:Dwell Ratio
+BASE	~/Documents/TAA-2226/AUDIT_SupplyRecords.txt	~/Documents/TAA-2226/requirements.txt	Sc. 7 + Sc 3.1 Deny + HLD + CT thru Surge	Pre-surge	12 months	1:02	Indefinite	1:00	9 months 	1:05	12 months	1:02
+Excursion_1	~/Documents/TAA-2226/AUDIT_SupplyRecords.txt	~/Documents/TAA-2226/requirements.txt	Sc. 7 + Sc 3.1 Deny + HLD + CT Surge only	Surge	Not modeled	Not Modeled	Indefinite	1:00	Not modeled	Not Modeled	12 months	1:02

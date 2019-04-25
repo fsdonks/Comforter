@@ -1,0 +1,4 @@
+Type	Enabled	Quantity	SRC	Component	OITitle	Name	Behavior	CycleTime	Policy	Tags	SpawnTime	Location	Position	Branch	Cleared	Original
+Supply Record	true	39	01205K000	AC	OI18	Auto	Auto	0	Auto	Auto	0	Auto	Auto	01	true	false
+Supply Record	true	18	01205K000	NG	OI18	Auto	Auto	0	Auto	Auto	0	Auto	Auto	01	true	false
+Supply Record	true	2	01205K000	RC	OI18	Auto	Auto	0	Auto	Auto	0	Auto	Auto	01	true	false
