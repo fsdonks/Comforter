@@ -96,20 +96,5 @@
   (def casep 
     (io/file-path "~/Documents/TAA-2226/cases.txt")))
 
-
-
-    
-        
-  
-  
-  
-  
-  
-  
-  
-  
-
 (defn gui [& args]
   (println "hello!"))
-
-
