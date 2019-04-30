@@ -1,18 +1,36 @@
 (ns comforter.core
-  (:require [spork.util 
+  (:require [spork.util
              [table :as tbl]
              [io :as io]
              [diff :as diff]]
             [spork.cljgui.components [swing :as swing]]
-            [marathon [schemas :as schemas]]))           
+            [marathon [schemas :as schemas]]))
 
-(def cost-schema 
+;;temporary, dumb spork patch
+(in-ns 'spork.util.io)
+(defmacro with-path
+  "Given a root directory, and a collection of bindings in the form
+   [path [subdir1 subdir2...file]], evals body inside an expression
+   with *root* bound to the root path, and each
+   binding available as a fully-realized file path
+   (relative-path *root* %) is called on each pathlist)."
+  [root bindings body]
+  (let [binds (mapcat
+                (fn [[nm pathlist]]
+                  (list nm `(relative-path ~root ~pathlist)))
+                (partition 2 bindings))]
+    `(let [~'*root* ~root
+           ~@binds]
+      ~body)))
+(in-ns 'comforter.core)
+
+(def cost-schema
   {:SRC      :text
    :Cost     :number
    :Str      :number})
 
 (defn lookup-by [k xs]
-  (into {} (map (fn [r] 
+  (into {} (map (fn [r]
                   [(k r) r])) xs))
 
 (defn load-costs [root]
@@ -21,14 +39,14 @@
        (into [])
        (lookup-by :SRC)))
 
-(def case-schema 
-  {:Case             :text 
-   :SupplyPath       :text 
+(def case-schema
+  {:Case             :text
+   :SupplyPath       :text
    :RequirementsPath :text})
 
 (defn load-cases [root]
   (->> (-> root 
-           (tbl/tabdelimited->records
+           (tbl/tabdelimited->record
              :schema case-schema :relaxed? true))
        (into [])))
 
@@ -45,21 +63,21 @@
       [k (- new old)])
     added))
 
-(defn load-supply [p] 
+(defn load-supply [p]
   (into [] (filter #(let [e (:Enabled %)]
-                      (or (= e true) 
+                      (or (= e true)
                           (= (clojure.string/upper-case e) "TRUE"))))
-    (tbl/tabdelimited->records p 
-      :schema (schemas/get-schema :SupplyRecord) 
+    (tbl/tabdelimited->records p
+      :schema (schemas/get-schema :SupplyRecord)
       :relaxed? true)))
 
-(defn compare-supply 
+(defn compare-supply
   "Compute a delta between two sequences of supply records.
-   This will be a sequence of [[SRC Compo] +/-number], 
+   This will be a sequence of [[SRC Compo] +/-number],
    indicating the distance between supplies."
   [l r]
   (let [keyf (juxt :SRC :Component)
-        extract (fn [xs] 
+        extract (fn [xs]
                   (into {} (map (fn [r] [(keyf r) (:Quantity r)]) xs)))
         ls  (extract l)
         rs  (extract r)]
@@ -70,31 +88,46 @@
   (for [[[src component] delta] xs]
     (let [ucost (-> src src->costs :Cost)
           str   (-> src src->costs :Str)]
-      {:SRC src :Component component :Delta delta :Cost ucost :Str str 
-       :TotalCost (* delta ucost) :TotalStr (* str delta)}))) 
+      {:SRC src :Component component :Delta delta :Cost ucost :Str str
+       :TotalCost (* delta ucost) :TotalStr (* str delta)})))
 
 (defn process-cases [cases src->costs]
-  (apply concat 
+  (apply concat
     (for [{:keys [Case SupplyPath RequirementsPath] :as c} cases]
       (do (println [:running-case c])
-        (try (->> (compare-supply 
+        (try (->> (compare-supply
                     (load-supply (io/file-path SupplyPath))
                     (load-supply (io/file-path RequirementsPath)))
                   (cost-diff src->costs)
                   (map #(merge c %)))
           (catch Exception e (throw (ex-info :error-processing-case c))))))))
 
-(defn spit-comforter [root])
-  
+(defn spit-comforter [root]
+  (io/with-path root [casep   ["comforter.cases.txt"]
+                      costp   ["comforter.cost.txt"]
+                      out     ["comforter.results.txt"]]
+    (let [cases  (load-cases casep)
+          src->costs  (load-costs costp)
+          supply (load-supply supplyp)
+          reqs   (load-supply reqp)]
+      (-> (process-cases cases src->costs)
+          (tbl/records->file out
+            :field-order
+            [:Case  :SRC :Component :Delta :Cost :Str]
+            :TotalCost :TotalStr :SupplyPath :RequirementsPath)))))
+
+
 (comment ;;testing
-  (def p 
+  (def p
     (io/file-path "~/Documents/TAA-2226/AUDIT_SupplyRecords.txt"))
-  (def rp 
+  (def rp
     (io/file-path "~/Documents/TAA-2226/requirements.txt"))
-  (def cp 
-    (io/file-path "~/Documents/TAA-2226/cost.txt"))
-  (def casep 
-    (io/file-path "~/Documents/TAA-2226/cases.txt")))
+  (def cp
+    (io/file-path "~/Documents/TAA-2226/comforter.cost.txt"))
+  (def casep
+    (io/file-path "~/Documents/TAA-2226/comforter.cases.txt")))
+
 
 (defn gui [& args]
   (println "hello!"))
+
