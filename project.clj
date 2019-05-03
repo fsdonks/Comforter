@@ -4,5 +4,6 @@
                  [marathon-schemas "4.1.6-SNAPSHOT"
                   :exclusions [spork]]
                  [spork "0.2.1.1-SNAPSHOT"]]
+  :source-paths ["src" "../spork/src" "..//src"]
   :aot [comforter.main]
   :main comforter.main)
