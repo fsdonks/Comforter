@@ -174,9 +174,8 @@
 
 ;; Returns the personnel in a single unit of the SRC
 (defn get-src-personnel [src supply supplyheader]
-  (apply + (map #(read-num (nth % (get supplyheader "Strength")))
-                (filter #(and (= src (nth % (get supplyheader "SRC")))
-                          (= "AC" (nth % (get supplyheader "Component"))))
+  (first (map #(read-num (nth % (get supplyheader "Strength")))
+                (filter #(= src (nth % (get supplyheader "SRC")))
                         (apply concat (vals supply))))))
 
 ;; Returns the total personnel for the SRC by multiplying the quantity of the
