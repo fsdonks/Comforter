@@ -3,6 +3,52 @@
   (:import  [javax.swing JFrame JFileChooser])
   (:require [clojure.java [io :as io]]))
 
+;; ===== OUTPUT FIELDS FOR FINAL TABLE  ===================================
+
+;;output fields that come from the input file
+(def input-fields
+  ["Case"
+   "Filepath"
+   "Demand ISC Description"
+   "Policy Description"
+   "AC Pre-Surge BOG"
+   "AC Pre-Surge BOG:Dwell Ratio"
+   "AC Surge BOG"
+   "AC Surge BOG:Dwell Ratio"
+   "RC Pre-Surge BOG"
+   "RC Pre-Surge Mob:Dwell Ratio"
+   "RC Surge BOG"
+   "RC Surge Mob:Dwell Ratio"
+   ])
+
+;;the rest of the fields not contained in the input file
+;;these are in the order that they should be for the COMFORTER table.
+(def rest-of-fields
+  ["Branch Code"
+ "Branch"
+ "Unit Grouping"
+ "Supply SRCs"
+ "Title"
+ "In Demand?"
+ "RC Only?"
+ "ARNG Supply"
+ "USAR Supply"
+ "RC Supply"
+ "AC Supply"
+ "AC O&S Cost/SRC"
+ "AC Supply Cost"
+ "Personnel/SRC"
+ "AC Supply Personnel"
+ "Requirements"
+ "Why no Requirements?"
+ "Requirement Cost"
+ "Requirement Personnel"
+ "Supply - Requirement"
+ "Additional Cost"
+   "Additional Personnel"])
+
+(def all-fields (concat input-fields rest-of-fields))
+  
 ;; ===== FUNCTIONS TO READ AND FORMAT INPUTS ===================================
 
 ;;Returns num from string without throwing errors
@@ -241,12 +287,7 @@
         header (apply conj
                       (into [] (sort-by #(get (read-header inputfile) %)
                                         (keys (read-header inputfile))))
-                      ["Branch Code" "Branch" "Unit Grouping" "Supply SRCs"
-                       "Title" "In Demand?" "RC Only?" "ARNG Supply" "USAR Supply"
-                       "RC Supply" "AC Supply" "AC O&S Cost/SRC" "AC Supply Cost"
-                       "Personnel/SRC" "AC Supply Personnel" "Requirements"
-                       "Why no Requirements?" "Requirement Cost" "Requirement Personnel"
-                       "Supply - Requirement" "Additional Cost" "Additional Personnel"])]
+                      rest-of-fields)]
       (conj (apply concat
               (for [i input]
                 (for [line (supply->lines supply supplyheader demand demandheader
@@ -295,3 +336,5 @@
     (->output)
     (catch Exception e (println e))
     (finally (System/exit 0))))
+
+
